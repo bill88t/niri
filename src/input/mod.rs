@@ -4422,10 +4422,25 @@ pub fn apply_libinput_settings(config: &niri_config::Input, device: &mut input::
         }
     }
 
+    let mut is_vmouse = false;
+    if let Some(udev_device) = unsafe { device.udev_device() } {
+        if let Some(name) = udev_device.property_value("NAME") {
+            if name.to_string_lossy().contains("keyd") {
+                is_vmouse = true;
+            }
+        }
+        if let Some(vendor) = udev_device.property_value("ID_VENDOR") {
+            if vendor.to_string_lossy().contains("keyd") {
+                is_vmouse = true;
+            }
+        }
+    }
+
     let is_mouse = device.has_capability(input::DeviceCapability::Pointer)
         && !is_touchpad
         && !is_trackball
-        && !is_trackpoint;
+        && !is_trackpoint
+        && !is_vmouse;
     if is_mouse {
         let c = &config.mouse;
         let _ = device.config_send_events_set_mode(if c.off {
